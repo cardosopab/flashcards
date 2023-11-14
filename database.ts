@@ -25,21 +25,21 @@ async function readFlashcards() {
 }
 
 // Function to update a flashcard
-// function updateFlashcard(
-//   cardId: number,
-//   newQuestion: string,
-//   newAnswer: string
-// ) {
-//   db.run("UPDATE flashcards SET question=?, answer=? WHERE id=?", [
-//     newQuestion,
-//     newAnswer,
-//     cardId,
-//   ]);
-// }
+function updateFlashcard(
+  cardId: number,
+  newQuestion: string,
+  newAnswer: string
+) {
+  db.run("UPDATE flashcards SET question=?, answer=? WHERE id=?", [
+    newQuestion,
+    newAnswer,
+    cardId,
+  ]);
+}
 
 // Function to delete a flashcard
 function deleteFlashcard(cardId: number) {
   db.run("DELETE FROM flashcards WHERE id=?", [cardId]);
 }
 
-export { createFlashcard, readFlashcards, deleteFlashcard };
+export { createFlashcard, readFlashcards, updateFlashcard, deleteFlashcard };
