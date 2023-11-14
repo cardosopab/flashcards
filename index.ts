@@ -1,4 +1,9 @@
-import { createFlashcard, deleteFlashcard, readFlashcards } from "./database";
+import {
+  createFlashcard,
+  deleteFlashcard,
+  readFlashcards,
+  updateFlashcard,
+} from "./database";
 Bun.serve({
   async fetch(req: Request) {
     const url = new URL(req.url);
@@ -21,8 +26,8 @@ Bun.serve({
       }
     }
 
-    // Handle POST request to "/create" endpoint
-    if (url.pathname === "/create" && req.method === "POST") {
+    // Handle POST request to "/cards" endpoint
+    if (url.pathname === "/cards" && req.method === "POST") {
       const params = url.searchParams;
       const isQuestion = params.has("question");
       const isAnswer = params.has("answer");
@@ -40,8 +45,28 @@ Bun.serve({
       );
     }
 
-    // Handle POST request to "/create" endpoint
-    if (url.pathname === "/delete" && req.method === "DELETE") {
+    // Handle PUT request to "/cards" endpoint
+    if (url.pathname === "/cards" && req.method === "PUT") {
+      const params = url.searchParams;
+      const isQuestion = params.has("question");
+      const isAnswer = params.has("answer");
+
+      // Extract flashcard information
+      const cardId = params.get("cardId");
+      const question = params.get("question");
+      const answer = params.get("answer");
+      // Create a new flashcard
+      if (question && answer && cardId) {
+        updateFlashcard(parseInt(cardId), question, answer);
+      }
+
+      return new Response(
+        `${question}, ${isQuestion}, ${answer}, ${isAnswer} created!`
+      );
+    }
+
+    // Handle POST request to "/cards" endpoint
+    if (url.pathname === "/cards" && req.method === "DELETE") {
       const params = url.searchParams;
       const isCardId = params.has("cardId");
 
