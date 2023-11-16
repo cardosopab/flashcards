@@ -4,9 +4,13 @@ import {
   readFlashcards,
   updateFlashcard,
 } from "./database";
+let cardIndex = 0;
+let isQuestion = true;
 Bun.serve({
   async fetch(req: Request) {
     const url = new URL(req.url);
+    const flashcards = await readFlashcards();
+
     if (url.pathname === "/") return new Response(Bun.file("./index.html"));
 
     // Handle GET request to "/cards" endpoint
@@ -29,8 +33,6 @@ Bun.serve({
     // Handle POST request to "/cards" endpoint
     if (url.pathname === "/cards" && req.method === "POST") {
       const params = url.searchParams;
-      const isQuestion = params.has("question");
-      const isAnswer = params.has("answer");
 
       // Extract flashcard information
       const question = params.get("question");
@@ -40,16 +42,12 @@ Bun.serve({
         createFlashcard(question, answer);
       }
 
-      return new Response(
-        `${question}, ${isQuestion}, ${answer}, ${isAnswer} created!`
-      );
+      return new Response(`${question},  ${answer}, created!`);
     }
 
     // Handle PUT request to "/cards" endpoint
     if (url.pathname === "/cards" && req.method === "PUT") {
       const params = url.searchParams;
-      const isQuestion = params.has("question");
-      const isAnswer = params.has("answer");
 
       // Extract flashcard information
       const cardId = params.get("cardId");
@@ -60,9 +58,7 @@ Bun.serve({
         updateFlashcard(parseInt(cardId), question, answer);
       }
 
-      return new Response(
-        `${question}, ${isQuestion}, ${answer}, ${isAnswer} created!`
-      );
+      return new Response(`${question}, ${answer} created!`);
     }
 
     // Handle POST request to "/cards" endpoint
@@ -79,7 +75,35 @@ Bun.serve({
 
       return new Response(`${cardId}, ${isCardId} deleted!`);
     }
+
+    if (url.pathname === "/newCard" && req.method === "POST") {
+      // cardIndex = Math.floor(Math.random() * flashcards.length);
+      cardIndex = (cardIndex + 1) % flashcards.length;
+      isQuestion = true;
+      let reply = isQuestion
+        ? `${FlashCard(flashcards[cardIndex].question)}`
+        : `${FlashCard(flashcards[cardIndex].answer)}`;
+      return new Response(reply);
+    }
+
+    if (url.pathname === "/flip" && req.method === "POST") {
+      isQuestion = !isQuestion;
+      console.log("flip", isQuestion);
+      let reply = isQuestion
+        ? `${FlashCard(flashcards[cardIndex].question)}`
+        : `${FlashCard(flashcards[cardIndex].answer)}`;
+      return new Response(reply);
+    }
+
     return new Response("404!");
   },
   port: 3000,
 });
+
+const FlashCard = (text: string) => {
+  return `
+  <div class="card">${text}</div>
+  <button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">New Card</button>
+  <button hx-post="/flip" hx-swap="innerHTML" hx-target="#content-container" class="button">Flip</button>
+  `;
+};
