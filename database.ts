@@ -1,4 +1,6 @@
 import { Database } from "bun:sqlite";
+import Card from "./Card";
+
 const db = new Database("cards.sqlite", { create: true });
 
 // Create a table to store flashcards if it doesn't exist
@@ -19,9 +21,11 @@ function createFlashcard(question: string, answer: string) {
 }
 
 // Function to retrieve all flashcards
-async function readFlashcards() {
-  console.log("readFlashcards");
-  return db.query(`SELECT * FROM flashcards`).all();
+async function readFlashcards(): Promise<Card[]> {
+  const queryResult = db.query(`SELECT * FROM flashcards`).all();
+
+  // Explicitly cast the query result to Card[]
+  return queryResult as Card[];
 }
 
 // Function to update a flashcard
