@@ -12,7 +12,12 @@
 </head>
 
 <body>
-    <h1>Hello, World!</h1>
+    <h1>Flash Cards</h1>
+    <div id="content-container">
+        <div class="card">Welcome!</div>
+        <button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">New Card</button>
+        <button hx-post="/flip" hx-swap="innerHTML" hx-target="#content-container" class="button">Flip</button>
+    </div>
 </body>
 
 </html>
