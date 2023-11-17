@@ -1,15 +1,18 @@
+import Card from "./Card";
 import {
   createFlashcard,
   deleteFlashcard,
+  getFlashcardByIndex,
+  getFlashcardsCount,
   readFlashcards,
   updateFlashcard,
 } from "./database";
-let cardIndex = 0;
+let rowIndex: number | null = null;
 let isQuestion = true;
+let flashcard: Card = {} as Card;
 Bun.serve({
   async fetch(req: Request) {
     const url = new URL(req.url);
-    const flashcards = await readFlashcards();
 
     if (url.pathname === "/") return new Response(Bun.file("./index.html"));
 
@@ -77,22 +80,62 @@ Bun.serve({
     }
 
     if (url.pathname === "/newCard" && req.method === "POST") {
-      // cardIndex = Math.floor(Math.random() * flashcards.length);
-      cardIndex = (cardIndex + 1) % flashcards.length;
-      isQuestion = true;
-      let reply = isQuestion
-        ? `${FlashCard(flashcards[cardIndex].question)}`
-        : `${FlashCard(flashcards[cardIndex].answer)}`;
-      return new Response(reply);
+      const flashcardsCount = await getFlashcardsCount();
+      // const rowIndex = Math.floor(Math.random() * flashcardsCount);
+      rowIndex = rowIndex == null ? 0 : ++rowIndex % flashcardsCount;
+
+      flashcard = (await getFlashcardByIndex(rowIndex)) ?? ({} as Card);
+      if (flashcard.id) {
+        isQuestion = true;
+        return new Response(`${FlashCard(flashcard.question)}`);
+      } else {
+        return new Response(`${FlashCard("No flashcard found!")}`);
+      }
     }
 
     if (url.pathname === "/flip" && req.method === "POST") {
       isQuestion = !isQuestion;
-      console.log("flip", isQuestion);
-      let reply = isQuestion
-        ? `${FlashCard(flashcards[cardIndex].question)}`
-        : `${FlashCard(flashcards[cardIndex].answer)}`;
-      return new Response(reply);
+
+      if (flashcard.id) {
+        let reply = isQuestion
+          ? `${FlashCard(flashcard.question)}`
+          : `${FlashCard(flashcard.answer)}`;
+        return new Response(reply);
+      } else {
+        return new Response(`${FlashCard("No flashcard found!")}`);
+      }
+    }
+
+    if (url.pathname === "/addForm" && req.method === "POST") {
+      return new Response(AddForm());
+    }
+
+    if (url.pathname === "/submitCard" && req.method === "POST") {
+      try {
+        const formData = await req.formData(); // Parse form data
+
+        // Get values from the form fields
+        const question = formData.get("question") as string;
+        const answer = formData.get("answer") as string;
+
+        // Check if both question and answer exist
+        if (question && answer) {
+          // Create flashcard using the form input values
+          const flashcardId = createFlashcard(question, answer);
+
+          // Construct a response or perform additional actions if needed
+          let reply = `Flashcard created with ID: ${flashcardId}`;
+          return new Response(`${FlashCard(reply)}`);
+        } else {
+          // Handle the case when question or answer is missing
+          return new Response(
+            `${AddForm("Please provide both a question and a answer.")}`
+          );
+        }
+      } catch (error) {
+        console.error("Error processing form data:", error);
+        return new Response("Internal Server Error", { status: 500 });
+      }
     }
 
     return new Response("404!");
@@ -102,8 +145,29 @@ Bun.serve({
 
 const FlashCard = (text: string) => {
   return `
+  <button hx-post="/addForm" hx-swap="innerHTML" hx-target="#content-container" class="button">Add Card</button>
   <div class="card">${text}</div>
-  <button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">New Card</button>
+  <button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">Next Card</button>
   <button hx-post="/flip" hx-swap="innerHTML" hx-target="#content-container" class="button">Flip</button>
+  `;
+};
+
+const AddForm = (error: string = "Please enter a question, and answer!") => {
+  return `
+<form hx-post="/submitCard">
+  <p>${error}</p>
+  <input id="question" name="question" type="text"
+      hx-post="/validate"
+      hx-trigger="change"
+      hx-sync="closest form:abort"
+  >
+  <input id="answer" name="answer" type="text"
+      hx-post="/validate"
+      hx-trigger="change"
+      hx-sync="closest form:abort"
+  >
+  <button type="submit">Submit</button>
+</form>
+<button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">Next Card</button>
   `;
 };
