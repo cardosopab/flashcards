@@ -14,8 +14,9 @@
 <body>
     <h1>Flash Cards</h1>
     <div id="content-container">
+        <button hx-post="/addForm" hx-swap="innerHTML" hx-target="#content-container" class="button">Add Card</button>
         <div class="card">Welcome!</div>
-        <button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">New Card</button>
+        <button hx-post="/newCard" hx-swap="innerHTML" hx-target="#content-container" class="button">Next Card</button>
         <button hx-post="/flip" hx-swap="innerHTML" hx-target="#content-container" class="button">Flip</button>
     </div>
 </body>
