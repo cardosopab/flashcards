@@ -46,4 +46,38 @@ function deleteFlashcard(cardId: number) {
   db.run("DELETE FROM flashcards WHERE id=?", [cardId]);
 }
 
-export { createFlashcard, readFlashcards, updateFlashcard, deleteFlashcard };
+// Function to get a single flashcard by ID
+async function getFlashcardById(cardId: number): Promise<Card | null> {
+  const queryResult = db
+    .prepare("SELECT * FROM flashcards WHERE id = ?")
+    .get(cardId);
+
+  return queryResult as Card | null;
+}
+
+// Function to get a single flashcard by row index
+async function getFlashcardByIndex(rowIndex: number): Promise<Card | null> {
+  const queryResult = db
+    .prepare("SELECT * FROM flashcards LIMIT 1 OFFSET ?")
+    .get(rowIndex);
+  return queryResult as Card | null;
+}
+
+// Function to get the count of flashcards
+async function getFlashcardsCount(): Promise<number> {
+  const count: any = db
+    .prepare("SELECT COUNT(*) AS count FROM flashcards")
+    .get();
+
+  return count.count as number;
+}
+
+export {
+  createFlashcard,
+  readFlashcards,
+  updateFlashcard,
+  deleteFlashcard,
+  getFlashcardById,
+  getFlashcardByIndex,
+  getFlashcardsCount,
+};
